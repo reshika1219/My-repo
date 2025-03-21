@@ -18,18 +18,20 @@ import {
 } from '@mui/material';
 import Logo from '../images/schedule.jpg'; // Replace with your own image
 
-const URL = "http://localhost:4000/appointments"; // You can replace this with your actual URL
+const URL = "http://localhost:4000/appointments"; // Replace with your actual API endpoint
 
 function SchedulePickup() {
   const [pickup, setPickup] = useState({
+    itemType: '',
+    scale: '',
+    image: null,
     customerName: '',
     contactNumber: '',
-    email: '',
+    address: '',
     pickupDate: '',
-    pickupTime: '',
-    serviceType: '',
-    notes: '',
+    returnOption: '',
   });
+
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
 
@@ -41,20 +43,40 @@ function SchedulePickup() {
     }));
   };
 
+  const handleFileChange = (e) => {
+    setPickup((prevState) => ({
+      ...prevState,
+      image: e.target.files[0],
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    const formData = new FormData();
+    Object.entries(pickup).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+
     try {
-      const response = await axios.post(URL, pickup);
-      console.log('Pickup scheduled:', response.data);
+      const response = await fetch(URL, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Failed to schedule pickup");
+
+      console.log('Pickup scheduled:', await response.json());
       setSuccess(true);
       setPickup({
+        itemType: '',
+        scale: '',
+        image: null,
         customerName: '',
         contactNumber: '',
-        email: '',
+        address: '',
         pickupDate: '',
-        pickupTime: '',
-        serviceType: '',
-        notes: '',
+        returnOption: '',
       });
     } catch (err) {
       setError('Error scheduling pickup. Please try again.');
@@ -71,12 +93,35 @@ function SchedulePickup() {
     <Box sx={{ backgroundColor: '#F5F5F5', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar />
       <Container sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', paddingY: 5 }}>
-        <Paper elevation={6} sx={{ paddingRight: 4, paddingLeft: 4, paddingTop: 4, borderRadius: 2, maxWidth: 900, backgroundColor: '#FFFFFF' }}>
-          <Grid container spacing={4}>
+        <Paper elevation={6} sx={{ padding: 4, borderRadius: 2, maxWidth: 900, backgroundColor: '#FFFFFF' }}>
+        <Grid container spacing={4} alignItems="stretch" sx={{ height: '128vh' }}>
+
             {/* Left Column: Image Section */}
-            <Grid item xs={12} sm={5} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#E0E0E0', borderRadius: 2 }}>
-              <img src={Logo} alt="Yakadabadu.lk" style={{ width: 'auto', maxHeight: '60vh', paddingRight: '4.5vh'}} />
-            </Grid>
+{/* Left Column: Image Section */}
+<Grid item xs={12} sm={5} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+  <Box sx={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#E0E0E0',
+    borderRadius: 2,
+    width: '100%',
+    height: '100%', // Ensure it takes full height
+    minHeight: '400px', // Adjust this if needed
+    padding: 2
+  }}>
+    <img 
+      src={Logo} 
+      alt="Yakadabadu.lk" 
+      style={{ 
+        width: '100%', 
+        height: '100%', 
+        objectFit: 'cover' // Ensures the image fills the space without distortion
+      }} 
+    />
+  </Box>
+</Grid>
+
 
             {/* Right Column: Form Section */}
             <Grid item xs={12} sm={7}>
@@ -87,6 +132,45 @@ function SchedulePickup() {
                 We help you with your waste management!
               </Typography>
               <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+                {/* Item Type */}
+                <InputLabel sx={{ color: '#333333' }}>Item Type</InputLabel>
+                <Select
+                  fullWidth
+                  name="itemType"
+                  value={pickup.itemType}
+                  onChange={handleInputChange}
+                  sx={{ marginBottom: 2, backgroundColor: '#FFFFFF', borderRadius: 2 }}
+                >
+                  <MenuItem value="metal">Metal</MenuItem>
+                  <MenuItem value="plastic">Plastic</MenuItem>
+                  <MenuItem value="wood">Wood</MenuItem>
+                </Select>
+
+                {/* Scale */}
+                <InputLabel sx={{ color: '#333333' }}>Scale</InputLabel>
+                <Select
+                  fullWidth
+                  name="scale"
+                  value={pickup.scale}
+                  onChange={handleInputChange}
+                  sx={{ marginBottom: 2, backgroundColor: '#FFFFFF', borderRadius: 2 }}
+                >
+                  <MenuItem value="small">Small (Less than 5kg)</MenuItem>
+                  <MenuItem value="medium">Medium (5-10kg)</MenuItem>
+                  <MenuItem value="large">Large (10-20kg)</MenuItem>
+                  <MenuItem value="extra-large">Extra Large (Above 20kg)</MenuItem>
+                </Select>
+
+                {/* Image Upload */}
+                <InputLabel sx={{ color: '#333333' }}>Upload Image</InputLabel>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  style={{ display: 'block', marginBottom: '16px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}
+                />
+
+                {/* Customer Name */}
                 <TextField
                   fullWidth
                   placeholder="Customer Name"
@@ -96,6 +180,8 @@ function SchedulePickup() {
                   onChange={handleInputChange}
                   sx={{ marginBottom: 2, backgroundColor: '#FFFFFF', borderRadius: 2 }}
                 />
+
+                {/* Contact Number */}
                 <TextField
                   fullWidth
                   placeholder="Contact Number"
@@ -105,18 +191,23 @@ function SchedulePickup() {
                   onChange={handleInputChange}
                   sx={{ marginBottom: 2, backgroundColor: '#FFFFFF', borderRadius: 2 }}
                 />
+
+                {/* Address */}
                 <TextField
                   fullWidth
-                  placeholder="Email"
+                  placeholder="Address"
                   variant="outlined"
-                  name="email"
-                  value={pickup.email}
+                  name="address"
+                  value={pickup.address}
                   onChange={handleInputChange}
+                  multiline
+                  rows={2}
                   sx={{ marginBottom: 2, backgroundColor: '#FFFFFF', borderRadius: 2 }}
                 />
+
+                {/* Preferred Pickup Date */}
                 <TextField
                   fullWidth
-                  placeholder="Pickup Date"
                   type="date"
                   variant="outlined"
                   name="pickupDate"
@@ -124,41 +215,23 @@ function SchedulePickup() {
                   onChange={handleInputChange}
                   sx={{ marginBottom: 2, backgroundColor: '#FFFFFF', borderRadius: 2 }}
                 />
-                <TextField
-                  fullWidth
-                  placeholder="Pickup Time"
-                  type="time"
-                  variant="outlined"
-                  name="pickupTime"
-                  value={pickup.pickupTime}
-                  onChange={handleInputChange}
-                  sx={{ marginBottom: 2, backgroundColor: '#FFFFFF', borderRadius: 2 }}
-                />
-                <InputLabel id="service-type-label" sx={{ color: '#333333' }}>Service Type</InputLabel>
+
+                {/* Return Option */}
+                <InputLabel sx={{ color: '#333333' }}>What do you want in return?</InputLabel>
                 <Select
                   fullWidth
-                  labelId="service-type-label"
-                  variant="outlined"
-                  name="serviceType"
-                  value={pickup.serviceType}
+                  name="returnOption"
+                  value={pickup.returnOption}
                   onChange={handleInputChange}
                   sx={{ marginBottom: 2, backgroundColor: '#FFFFFF', borderRadius: 2 }}
                 >
-                  <MenuItem value="" disabled>Select a Service</MenuItem>
-                  <MenuItem value="pickup">Pickup</MenuItem>
-                  <MenuItem value="disposal">Disposal</MenuItem>
+                  <MenuItem value="broom">Broom</MenuItem>
+                  <MenuItem value="basin">Basin</MenuItem>
+                  <MenuItem value="cash">Cash (Amount depends on the item scale)</MenuItem>
+                  <MenuItem value="nothing">I want nothing—just take these and leave</MenuItem>
                 </Select>
-                <TextField
-                  fullWidth
-                  placeholder="Notes"
-                  variant="outlined"
-                  name="notes"
-                  multiline
-                  rows={4}
-                  value={pickup.notes}
-                  onChange={handleInputChange}
-                  sx={{ marginBottom: 2, backgroundColor: '#FFFFFF', borderRadius: 2 }}
-                />
+
+                {/* Submit Button */}
                 <Button
                   type="submit"
                   fullWidth
@@ -175,22 +248,11 @@ function SchedulePickup() {
                 >
                   Schedule Pickup
                 </Button>
-                <Divider sx={{ marginY: 2 }} />
               </Box>
             </Grid>
           </Grid>
         </Paper>
       </Container>
-      <Snackbar open={success} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-        <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
-          Pickup scheduled successfully!
-        </Alert>
-      </Snackbar>
-      <Snackbar open={Boolean(error)} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-        <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: '100%' }}>
-          {error}
-        </Alert>
-      </Snackbar>
       <Footer />
     </Box>
   );
